@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="am">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>የአማርኛ ቃላት መፍቻ - Amharic Unscrambler</title>
+    <style>
+        :root {
+            --primary: #10b981;
+            --bg-dark: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-exact: #34d399;
+            --accent-phonetic: #fbbf24;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            width: 100%;
+            max-width: 480px;
+            text-align: center;
+            border: 1px solid #334155;
+        }
+
+        .flag-icon {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+
+        h1 {
+            color: var(--text-main);
+            font-size: 1.8rem;
+            margin: 5px 0;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 25px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 20px;
+            box-sizing: border-box;
+            background-color: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            color: #fff;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+            outline: none;
+        }
+
+        .results-section {
+            text-align: left;
+            max-height: 280px;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        /* Custom Scrollbar for results */
+        .results-section::-webkit-scrollbar {
+            width: 6px;
+        }
+        .results-section::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+
+        h3 {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin: 15px 0 8px 0;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .match-box {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            animation: fadeIn 0.2s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .exact {
+            background: rgba(52, 211, 153, 0.1);
+            color: var(--accent-exact);
+            border: 1px solid rgba(52, 211, 153, 0.2);
+        }
+
+        .phonetic {
+            background: rgba(251, 191, 36, 0.1);
+            color: var(--accent-phonetic);
+            border: 1px solid rgba(251, 191, 36, 0.2);
+        }
+
+        .no-match {
+            color: #f87171;
+            text-align: center;
+            font-style: italic;
+            padding: 15px;
+            background: rgba(248, 113, 113, 0.05);
+            border-radius: 8px;
+        }
+
+        .stats-panel {
+            margin-top: 20px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: #0f172a;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #334155;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="flag-icon">🇪🇹</div>
+    <h1>የአማርኛ ቃላት መፍቻ</h1>
+    <div class="subtitle">Amharic Smart Unscrambler</div>
+    
+    <div class="input-wrapper">
+        <input type="text" id="scrambledInput" placeholder="ይፃፉ... (e.g., ምሰላ ወይም ስላመ)" autocomplete="off">
+    </div>
+    
+    <div class="results-section" id="results"></div>
+
+    <div class="stats-panel" id="statsPanel">
+        ብዛት: በማገናኘት ላይ... (Loading Dictionary Database)
+    </div>
+</div>
+
+<script>
+    // Expanded local Amharic dictionary database array
+    const AMHARIC_DICTIONARY = [
+        "ሰላም", "አዲስ", "አበባ", "ኢትዮጵያ", "ደስተኛ", "ጤና", "ፍቅር", "መጽሐፍ", "ትምህርት", "ደመና",
+        "ሀገር", "ታሪክ", "ባህል", "ቋንቋ", "ምግብ", "ቡና", "አንበሳ", "ወርቅ", "ክብር", "ነፃነት",
+        "ትዝታ", "ትዳር", "ትግራይ", "ትግርኛ", "ቸልታ", "ችሮታ", "ቸርነት", "ቸርቻሪ", "ችርቻሮ", "ችንካር",
+        "ቸነፈር", "ችካል", "ችግር", "ችፍቻፊ", "ችሎታ", "ችሎት", "ችቦ", "ችግኝ", "ችፌ", "ችፍርግ",
+        "ኅሙስ", "ኅምስ", "ኅይል", "ኅጋይ", "ኅጢአት", "ኅፍረት", "መዝገብ", "መደብ", "ሰረገላ", "ሰርን",
+        "ሰማይ", "ምድር", "ፀሐይ", "ጨረቃ", "ኮከብ", "ወንዝ", "ባህር", "ተራራ", "ጫካ", "እሳት",
+        "ውሃ", "ነፋስ", "ዝናብ", "በረዶ", "ሀብት", "ዕውቀት", "ጥበብ", "እውነት", "ሰዓት", "ቀን"
+    ];
+
+    // Phonetic mappings for modern Amharic characters (Fidel to Sound Base)
+    const PHONETIC_MAP = {
+        "ሰ": "s", "ሱ": "s", "ሲ": "s", "ሳ": "s", "ሴ": "s", "ስ": "s", "ሶ": "s", "ሠ": "s", "ሡ": "s", "ሢ": "s", "ሣ": "s", "ሤ": "s", "ሥ": "s", "ሦ": "s",
+        "ለ": "l", "ሉ": "l", "ሊ": "l", "ላ": "l", "ሌ": "l", "ል": "l", "ሎ": "l",
+        "መ": "m", "ሙ": "m", "ሚ": "m", "ማ": "m", "ሜ": "m", "ም": "m", "ሞ": "m",
+        "አ": "a", "ኡ": "a", "ኢ": "a", "ኣ": "a", "ኤ": "a", "እ": "a", "ኦ": "a", "ዓ": "a", "ዑ": "a", "ዒ": "a", "ዔ": "a", "ዕ": "a", "ዖ": "a",
+        "ደ": "d", "ዱ": "d", "ዲ": "d", "ዳ": "d", "ዴ": "d", "ድ": "d", "ዶ": "d",
+        "ተ": "t", "ቱ": "t", "ቲ": "t", "ታ": "t", "ቴ": "t", "ት": "t", "ቶ": "t",
+        "ሀ": "h", "ሁ": "h", "ሂ": "h", "ሃ": "h", "ሄ": "h", "ህ": "h", "ሆ": "h", "ሐ": "h", "ሑ": "h", "ሒ": "h", "ሓ": "h", "ሔ": "h", "ሕ": "h", "ሖ": "h", "ኀ": "h", "ኁ": "h", "ኂ": "h", "ኃ": "h", "ኄ": "h", "ኅ": "h", "ኆ": "h",
+        "ወ": "w", "ዉ": "w", "ዊ": "w", "ዋ": "w", "ዌ": "w", "ው": "w", "ዎ": "w",
+        "ነ": "n", "ኑ": "n", "ኒ": "n", "ና": "n", "ኔ": "n", "ን": "n", "ኖ": "n",
+        "ኘ": "ny", "ኙ": "ny", "ኚ": "ny", "ኛ": "ny", "ኜ": "ny", "ኝ": "ny", "ኞ": "ny",
+        "አ": "a", "ኡ": "a", "ኢ": "a", "ኣ": "a", "ኤ": "a", "እ": "a", "ኦ": "a",
+        "ከ": "k", "ኩ": "k", "ኪ": "k", "ካ": "k", "ኬ": "k", "ክ": "k", "ኮ": "k",
+        "ወ": "w", "ዉ": "w", "ዊ": "w", "ዋ": "w", "ዌ": "w", "ው": "w", "ዎ": "w",
+        "ዘ": "z", "ዙ": "z", "ዚ": "z", "ዛ": "z", "ዜ": "z", "ዝ": "z", "ዞ": "z",
+        "የ": "y", "ዩ": "y", "ዪ": "y", "ያ": "y", "ዬ": "y", "ይ": "y", "ዮ": "y",
+        "ገ": "g", "ጉ": "g", "ጊ": "g", "ጋ", "g", "ጌ": "g", "ግ": "g", "ጎ": "g",
+        "ጠ": "t", "ጡ": "t", "ጢ": "t", "ጣ": "t", "ጤ": "t", "ጥ": "t", "ጦ": "t",
+        "ጨ": "ch", "ጩ": "ch", "ጪ": "ch", "ጫ": "ch", "ጬ": "ch", "ጭ": "ch", "ጮ": "ch",
+        "ጰ": "p", "ጶ": "p", "ጲ": "p", "ጳ": "p", "ጴ": "p", "ጵ": "p", "ጶ": "p",
+        "ጸ": "ts", "ጹ": "ts", "ጺ": "ts", "ጻ": "ts", "ጼ": "ts", "ጽ": "ts", "ጾ": "ts", "ፀ": "ts", "ፁ": "ts", "ፂ": "ts", "ፃ": "ts", "ፄ": "ts", "ፅ": "ts", "ፆ": "ts",
+        "ፈ": "f", "ፉ": "f", "ፊ": "f", "ፋ": "f", "ፌ": "f", "ፍ": "f", "ፎ": "f",
+        "ፖ": "p", "ፑ": "p", "ፒ": "p", "ፓ": "p", "ፔ": "p", "ፕ": "p", "ፖ": "p",
+        "ቸ": "ch", "ቹ": "ch", "ቺ": "ch", "ቻ": "ch", "ቼ": "ch", "ች": "ch", "ቾ": "ch"
+    };
+
+    // Initialize stats display
+    document.getElementById('statsPanel').innerText = `📦 Dictionary Database Size: ${AMHARIC_DICTIONARY.length} Base Words`;
+
+    function sortString(str) {
+        return str.split('').sort().join('');
+    }
+
+    function getPhoneticSignature(word) {
+        return sortString(word.split('').map(char => PHONETIC_MAP[char] || char).join(''));
+    }
+
+    function processUnscramble(input) {
+        if (!input) return { exact: [], phonetic: [] };
+
+        const sortedInput = sortString(input);
+        const inputSignature = getPhoneticSignature(input);
+
+        let exactMatches = [];
+        let phoneticMatches = [];
+
+        AMHARIC_DICTIONARY.forEach(word => {
+            if (sortString(word) === sortedInput) {
+                exactMatches.push(word);
+            } else if (getPhoneticSignature(word) === inputSignature) {
+                phoneticMatches.push(word);
+            }
+        });
+
+        return { exact: exactMatches, phonetic: phoneticMatches };
+    }
+
+    document.getElementById('scrambledInput').addEventListener('input', function(e) {
+        const inputVal = e.target.value.trim();
+        const resultsDiv = document.getElementById('results');
+        resultsDiv.innerHTML = '';
+
+        if (!inputVal) return;
+
+        const { exact, phonetic } = processUnscramble(inputVal);
+
+        if (exact.length === 0 && phonetic.length === 0) {
+            resultsDiv.innerHTML = `<div class="no-match">🤷 ምንም ተዛማጅ ቃል አልተገኘም (No match found)</div>`;
+            return;
+        }
+
+        if (exact.length > 0) {
+            resultsDiv.innerHTML += `<h3>🎯 Exact Character Swap</h3>`;
+            exact.forEach(match => {
+                resultsDiv.innerHTML += `<div class="match-box exact"><span>🎉 ${match}</span><span>Found</span></div>`;
+            });
+        }
+
+        if (phonetic.length > 0) {
+            resultsDiv.innerHTML += `<h3>👂 Smart Phonetic Match</h3>`;
+            phonetic.forEach(match => {
+                resultsDiv.innerHTML += `<div class="match-box phonetic"><span>✨ ${match}</span><span>Root Match</span></div>`;
+            });
+        }
+    });
+</script>
+
+</body>
+</html>
